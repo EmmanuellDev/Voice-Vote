@@ -128,9 +128,6 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
             response = agent.prompt(prompt)
             print(f"Alith Agent Response: {response}")
 
-
-
-
             # Parse JSON response
             try:
                 # Clean the response and extract JSON
@@ -146,22 +143,35 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
                         # Add missing closing brace
                         cleaned_response += '}'
 
-          
+                if cleaned_response.startswith('{') and cleaned_response.endswith('}'):
+                    result = json.loads(cleaned_response)
+                else:
+                    # Extract JSON from mixed content
+                    start_idx = cleaned_response.find('{')
+                    end_idx = cleaned_response.rfind('}') + 1
+                    if start_idx != -1 and end_idx > start_idx:
+                        json_str = cleaned_response[start_idx:end_idx]
+                        # Try to fix incomplete JSON
+                        if not json_str.endswith('}'):
+                            json_str += '}'
+                        result = json.loads(json_str)
+                    else:
+                        raise ValueError("No JSON found in response")
+
+                # Validate response structure
+                if 'caption' not in result or 'hashtags' not in result:
+                    raise ValueError("Invalid response structure")
 
                 # Clean and format hashtags
                 if isinstance(result['hashtags'], list):
-                    
                     cleaned_hashtags = []
                     for tag in result['hashtags']:
-                        
                         clean_tag = str(tag).strip()
                         # Remove spaces and special characters except alphanumeric
                         clean_tag = re.sub(r'[^a-zA-Z0-9]', '', clean_tag)
                         if clean_tag and not clean_tag.startswith('#'):
-                            
                             clean_tag = '#' + clean_tag
                         if clean_tag and len(clean_tag) > 1:
-                            
                             cleaned_hashtags.append(clean_tag)
                     result['hashtags'] = cleaned_hashtags
 
@@ -178,17 +188,7 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
                 # Smart hashtag generation based on content
                 hashtags = ["#civicissue", "#community"]
                 content_lower = user_content.lower()
-
-                if any(word in content_lower for word in ['road', 'street', 'pothole', 'traffic']):
-                    hashtags.append("#infrastructure")
-                elif any(word in content_lower for word in ['water', 'drainage', 'flood', 'pipe']):
-                    hashtags.append("#watersupply")
-                elif any(word in content_lower for word in ['light', 'electricity', 'power']):
-                    hashtags.append("#utilities")
-                elif any(word in content_lower for word in ['waste', 'garbage', 'trash', 'clean']):
-                    hashtags.append("#sanitation")
-                else:
-                    hashtags.append("#infrastructure")
+ 
 
                 fallback_response = {
                     "caption": fallback_caption[:100],
