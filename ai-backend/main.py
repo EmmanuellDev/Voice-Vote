@@ -83,15 +83,12 @@ def suggest_caption():
     'overthrow government', 'destroy nation', 'attack party', 
     'eliminate party', 'down with', 'burn flag', 'bomb parliament', 
     'kill president', 'kill prime minister', 'kill leader',
-    'threaten government', 'target embassy', 'political assassination',
-    
+    'threaten government', 'target embassy', 'political assassination'
 ]
 
         content_lower = user_content.lower()
         for keyword in inappropriate_keywords:
-            
             if keyword in content_lower:
-                
                 return jsonify({
                     'error': 'Content not appropriate for civic reporting. Please focus on community issues.'
                 }), 400
@@ -99,7 +96,6 @@ def suggest_caption():
         # Create Alith Agent
         agent = create_alith_agent()
         if not agent:
-            
             print("Failed to create Alith Agent - using fallback")
             return jsonify({
                 'error': 'AI service unavailable. Please try again later.'
@@ -139,10 +135,8 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
 
                 # Try to fix incomplete JSON by adding missing closing brace
                 if cleaned_response.startswith('{') and not cleaned_response.endswith('}'):
-                    
                     # Check if it looks like incomplete JSON
                     if '"hashtags":' in cleaned_response and cleaned_response.count('[') > cleaned_response.count(']'):
-                        
                         # Add missing closing bracket and brace
                         cleaned_response += ']}'
                     elif not cleaned_response.endswith('}'):
@@ -172,7 +166,6 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
                 if isinstance(result['hashtags'], list):
                     cleaned_hashtags = []
                     for tag in result['hashtags']:
-                        
                         clean_tag = str(tag).strip()
                         # Remove spaces and special characters except alphanumeric
                         clean_tag = re.sub(r'[^a-zA-Z0-9]', '', clean_tag)
@@ -186,7 +179,6 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
                 return jsonify(result)
 
             except (json.JSONDecodeError, ValueError) as e:
-                
                 print(f"Alith JSON parsing error: {e}")
                 print(f"Raw Alith response: {response}")
 
@@ -217,7 +209,6 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
                 return jsonify(fallback_response)
 
         except Exception as agent_error:
-            
             print(f"Alith Agent error: {agent_error}")
             return jsonify({
                 'error': 'AI processing failed. Please try again later.'
@@ -229,6 +220,9 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
             'error': 'Service temporarily unavailable. Please try again later.'
         }), 500
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy', 'service': 'alith-ai-suggestion-api'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
