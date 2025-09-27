@@ -1,21 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUsers, FiShield, FiZap, FiTrendingUp, FiMessageCircle, FiGlobe, FiClock, FiArrowRight } from 'react-icons/fi';
-import { IoEarth, IoPeople, IoLockClosed, IoGlobe } from 'react-icons/io5';
-import DISPLAY from '../assets/display.png';
+import { 
+  FiUsers, 
+  FiShield, 
+  FiZap, 
+  FiTrendingUp, 
+  FiMessageCircle, 
+  FiGlobe, 
+  FiClock, 
+  FiArrowRight,
+  FiEye,
+  FiBarChart2,
+  FiThumbsUp,
+  FiAward,
+  FiHeart,
+  FiTarget,
+  FiCheckCircle
+} from 'react-icons/fi';
+import { 
+  IoEarth, 
+  IoPeople, 
+  IoLockClosed, 
+  IoRocket,
+  IoSparkles,
+  IoMegaphone,
+  IoStatsChart,
+  IoShieldCheckmark
+} from 'react-icons/io5';
 
 const Header: React.FC = () => {
-  const [currentSlide, setCurrentSlide] = useState<number>(1);
+  const [currentFeature, setCurrentFeature] = useState<number>(1);
   const [currentTime, setCurrentTime] = useState<string>('');
-  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'features' | 'stats' | 'community'>('features');
   const navigate = useNavigate();
 
-  // Update time every second in IST 12-hour format
+  // Update time every second
   useEffect(() => {
     const updateTime = (): void => {
       const now = new Date();
-      const options: Intl.DateTimeFormatOptions = { timeZone: 'Asia/Kolkata' };
       const timeInIST = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
       let hours = timeInIST.getHours();
       const minutes = timeInIST.getMinutes();
@@ -33,11 +56,11 @@ const Header: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-rotate features every 5 seconds
+  // Auto-rotate features
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev % 4) + 1);
-    }, 5000);
+      setCurrentFeature(prev => (prev % 6) + 1);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -45,271 +68,386 @@ const Header: React.FC = () => {
     navigate('/register');
   };
 
-  const features = [
+  const mainFeatures = [
     {
       id: 1,
       icon: <IoLockClosed className="text-2xl" />,
       title: "Complete Anonymity",
-      description: "Your identity remains protected while you voice concerns",
-      color: "from-purple-500 to-pink-500"
+      description: "Your identity remains protected with military-grade encryption while you voice concerns",
+      stats: "100% anonymous posting",
+      color: "from-amber-500 to-orange-500"
     },
     {
       id: 2,
-      icon: <FiZap className="text-2xl" />,
+      icon: <IoSparkles className="text-2xl" />,
       title: "AI-Powered Analysis",
-      description: "Alith AI assigns urgency and categorizes your concerns",
-      color: "from-blue-500 to-cyan-500"
+      description: "Alith AI analyzes content and assigns urgency levels to ensure important issues get attention",
+      stats: "95% accuracy rate",
+      color: "from-red-500 to-rose-500"
     },
     {
       id: 3,
       icon: <IoPeople className="text-2xl" />,
       title: "Community Driven",
-      description: "Join thousands of civic-minded individuals",
-      color: "from-green-500 to-emerald-500"
+      description: "Join thousands of civic-minded individuals making real change in their communities",
+      stats: "50K+ active members",
+      color: "from-brown-500 to-amber-500"
     },
     {
       id: 4,
-      icon: <IoGlobe className="text-2xl" />,
-      title: "Global Impact",
-      description: "Make your voice heard on local and global issues",
+      icon: <IoMegaphone className="text-2xl" />,
+      title: "Amplified Voice",
+      description: "Your concerns reach relevant authorities and gain traction through community support",
+      stats: "100K+ issues resolved",
       color: "from-orange-500 to-red-500"
+    },
+    {
+      id: 5,
+      icon: <IoStatsChart className="text-2xl" />,
+      title: "Real-time Analytics",
+      description: "Track issue progress, community engagement, and resolution status in real-time",
+      stats: "Live updates 24/7",
+      color: "from-yellow-500 to-amber-500"
+    },
+    {
+      id: 6,
+      icon: <IoShieldCheckmark className="text-2xl" />,
+      title: "Verified Impact",
+      description: "Get confirmation when your voiced concerns lead to tangible changes and solutions",
+      stats: "75% success rate",
+      color: "from-red-600 to-brown-600"
     }
   ];
 
-  const stats = [
-    { value: "50K+", label: "Active Users", icon: <FiUsers /> },
-    { value: "100K+", label: "Issues Raised", icon: <FiMessageCircle /> },
-    { value: "95%", label: "Anonymity Rate", icon: <FiShield /> },
-    { value: "24/7", label: "Active Support", icon: <FiClock /> }
+  const platformStats = [
+    { value: "75K+", label: "Registered Users", change: "+12% this month", icon: <FiUsers /> },
+    { value: "150K+", label: "Issues Raised", change: "+25% growth", icon: <FiMessageCircle /> },
+    { value: "45K+", label: "Issues Resolved", change: "Community driven", icon: <FiCheckCircle /> },
+    { value: "98%", label: "User Satisfaction", change: "Based on reviews", icon: <FiHeart /> },
+    { value: "2.5M+", label: "Total Engagements", change: "Likes & comments", icon: <FiThumbsUp /> },
+    { value: "95%", label: "Anonymity Maintained", change: "Zero breaches", icon: <FiShield /> }
   ];
 
+  const communityHighlights = [
+    {
+      title: "Park Renovation Success",
+      description: "Community rallied for park maintenance - now completed with new facilities",
+      supporters: "2.4K",
+      status: "Completed"
+    },
+    {
+      title: "Road Safety Campaign",
+      description: "Speed bumps installed near school zones after 5K+ signatures",
+      supporters: "5.1K",
+      status: "In Progress"
+    },
+    {
+      title: "Local Market Cleanup",
+      description: "Weekly cleaning initiative started by community members",
+      supporters: "1.8K",
+      status: "Active"
+    }
+  ];
+
+  const currentFeatureData = mainFeatures.find(f => f.id === currentFeature);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 overflow-hidden">
-      {/* Animated Background */}
+    <div className="min-h-screen bg-gradient-to-br from-brown-50 via-amber-50 to-red-50 overflow-hidden">
+      {/* Enhanced Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -inset-10 opacity-20">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-purple-400 rounded-full"
-              animate={{
-                x: [0, 100, 0],
-                y: [0, 50, 0],
-              }}
-              transition={{
-                duration: Math.random() * 10 + 10,
-                repeat: Infinity,
-                delay: i * 0.5,
-              }}
-            />
-          ))}
-        </div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+        
+        {/* Floating elements */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-6 h-6 rounded-full bg-gradient-to-r from-amber-200 to-red-200 opacity-30"
+            animate={{
+              y: [0, -30, 0],
+              x: [0, Math.random() * 20 - 10, 0],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              delay: i * 0.7,
+            }}
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
       </div>
 
-      <section className="relative min-h-[85vh] pt-6 text-gray-100 flex flex-col md:flex-row z-10">
-        {/* Left Side - Text Content */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center p-8 md:p-12 lg:p-16">
-          <div className="max-w-lg mx-auto">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-purple-300/20 mb-6"
+      {/* Main Navigation */}
+      <nav className="relative z-20 py-6 px-8">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center space-x-3"
+          >
+            <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-red-500 rounded-xl flex items-center justify-center">
+              <IoMegaphone className="text-2xl text-white" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-brown-600 to-red-600 bg-clip-text text-transparent">
+              VoiceVote
+            </span>
+          </motion.div>
+          
+          <div className="flex items-center space-x-6">
+            <button className="text-brown-600 hover:text-red-600 font-medium">About</button>
+            <button className="text-brown-600 hover:text-red-600 font-medium">Features</button>
+            <button className="text-brown-600 hover:text-red-600 font-medium">Community</button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleExplore}
+              className="bg-gradient-to-r from-amber-500 to-red-500 text-white px-6 py-2 rounded-lg font-semibold"
             >
-              <FiTrendingUp className="mr-2" />
-              <span className="text-sm font-medium">Trusted by thousands worldwide</span>
-            </motion.div>
-
-            {/* Title */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-5xl md:text-6xl righteous lg:text-7xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent bg-size-200 animate-gradient"
-            >
-              Voice Vote 0G
-            </motion.h1>
-            
-            {/* Subtitle */}
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-2xl md:text-3xl alegra text-gray-300 mb-6 font-medium flex items-center"
-            >
-              <IoEarth className="mr-3 text-blue-400" />
-              Anonymous Civic Voice Platform
-            </motion.h2>
-
-            {/* Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-gray-300 mb-8 text-lg alegra leading-relaxed"
-            >
-              Voice-Vote is a decentralized platform that empowers individuals to anonymously voice real-world civic concerns while ensuring data integrity and privacy. With Alith AI, post content is enhanced and analyzed to assign urgency.
-            </motion.p>
-
-            {/* Stats Grid */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="grid grid-cols-2 gap-4 mb-8"
-            >
-              {stats.map((stat, index) => (
-                <div key={index} className="flex items-center p-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10">
-                  <div className="text-2xl text-purple-400 mr-3">{stat.icon}</div>
-                  <div>
-                    <div className="font-bold text-white">{stat.value}</div>
-                    <div className="text-sm text-gray-400">{stat.label}</div>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-
-            {/* CTA Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8"
-            >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onHoverStart={() => setIsHovered(true)}
-                onHoverEnd={() => setIsHovered(false)}
-                onClick={handleExplore}
-                className="relative bg-gradient-to-r cursor-pointer from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/30 flex items-center group"
-              >
-                <span>Complete KYC</span>
-                <motion.span
-                  animate={{ x: isHovered ? 5 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="ml-2"
-                >
-                  <FiArrowRight />
-                </motion.span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </motion.button>
-
-              {/* Timer */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.7 }}
-                className="flex items-center px-6 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-purple-300/30 shadow-lg"
-              >
-                <FiClock className="mr-3 text-purple-400" />
-                <span className="font-mono text-purple-100 tracking-widest michroma">
-                  {currentTime}
-                </span>
-              </motion.div>
-            </motion.div>
+              Join Now
+            </motion.button>
           </div>
         </div>
+      </nav>
 
-        {/* Right Side - Image and Features */}
-        <div className="w-full md:w-1/2 relative flex items-center justify-center p-8">
-          <div className="relative w-full max-w-2xl">
-            {/* Main Image */}
+      {/* Hero Section */}
+      <section className="relative min-h-[80vh] flex items-center pt-10 pb-20 px-8">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          
+          {/* Left Content */}
+          <div className="space-y-8">
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="relative z-10"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-6"
             >
-              <img
-                src={DISPLAY}
-                alt="Voice Vote 0G Platform Preview"
-                className="w-full rounded-3xl shadow-2xl border-2 border-white/10"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent rounded-3xl" />
+              {/* Badge */}
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-amber-100 border border-amber-200">
+                <FiTrendingUp className="text-amber-600 mr-2" />
+                <span className="text-sm font-medium text-amber-700">Trusted by 75,000+ users worldwide</span>
+              </div>
+
+              {/* Main Title */}
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+                <span className="bg-gradient-to-r from-brown-900 via-red-600 to-amber-600 bg-clip-text text-transparent">
+                  Your Voice, <br />
+                </span>
+                <span className="text-brown-800">Amplified Safely</span>
+              </h1>
+
+              {/* Description */}
+              <p className="text-xl text-brown-700 leading-relaxed">
+                VoiceVote is the premier decentralized platform where individuals anonymously voice 
+                civic concerns while ensuring complete privacy and data integrity. 
+                <span className="font-semibold text-red-600"> Powered by Alith AI</span> for intelligent issue prioritization.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleExplore}
+                  className="bg-gradient-to-r from-amber-500 to-red-500 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+                >
+                  Start Your Journey
+                  <FiArrowRight className="ml-2" />
+                </motion.button>
+                
+                <button className="border-2 border-amber-500 text-amber-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-amber-50 transition-colors">
+                  Watch Demo
+                </button>
+              </div>
+
+              {/* Live Stats */}
+              <div className="flex items-center space-x-6 pt-6">
+                <div className="flex items-center space-x-3 text-brown-600">
+                  <FiUsers className="text-xl" />
+                  <span className="font-semibold">75K+ Active Users</span>
+                </div>
+                <div className="flex items-center space-x-3 text-brown-600">
+                  <FiCheckCircle className="text-xl" />
+                  <span className="font-semibold">45K+ Issues Resolved</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right Content - Feature Showcase */}
+          <div className="relative">
+            {/* Main Feature Card */}
+            <motion.div
+              key={currentFeature}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white rounded-2xl shadow-2xl border border-amber-100 p-8 relative overflow-hidden"
+            >
+              <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${currentFeatureData?.color}`}></div>
+              
+              <div className="flex items-center space-x-4 mb-6">
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${currentFeatureData?.color} flex items-center justify-center text-white`}>
+                  {currentFeatureData?.icon}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-brown-800">{currentFeatureData?.title}</h3>
+                  <p className="text-amber-600 font-semibold">{currentFeatureData?.stats}</p>
+                </div>
+              </div>
+              
+              <p className="text-brown-700 text-lg leading-relaxed mb-6">
+                {currentFeatureData?.description}
+              </p>
+              
+              <div className="flex justify-between items-center">
+                <div className="flex space-x-2">
+                  {mainFeatures.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentFeature(index + 1)}
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        currentFeature === index + 1 ? 'bg-amber-500 w-6' : 'bg-amber-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+                
+                <div className="flex items-center space-x-2 text-brown-600">
+                  <FiClock />
+                  <span className="font-mono">{currentTime}</span>
+                </div>
+              </div>
             </motion.div>
 
-            {/* Floating Feature Cards */}
-            <AnimatePresence>
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ 
-                    opacity: currentSlide === feature.id ? 1 : 0.6,
-                    scale: currentSlide === feature.id ? 1 : 0.9,
-                  }}
-                  transition={{ duration: 0.5 }}
-                  className={`absolute p-4 rounded-2xl backdrop-blur-md border ${
-                    currentSlide === feature.id ? 'bg-white/10 border-white/20' : 'bg-white/5 border-white/10'
-                  } shadow-2xl ${
-                    index === 0 ? '-top-4 -left-4' :
-                    index === 1 ? '-top-4 -right-4' :
-                    index === 2 ? '-bottom-4 -left-4' :
-                    '-bottom-4 -right-4'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-2`}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="font-semibold text-white mb-1">{feature.title}</h3>
-                  <p className="text-sm text-gray-300">{feature.description}</p>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {/* Slide Indicators */}
-            <div className="flex justify-center mt-8 space-x-2">
-              {features.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index + 1)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    currentSlide === index + 1 ? 'bg-purple-400 w-8' : 'bg-white/30'
-                  }`}
-                />
-              ))}
-            </div>
+            {/* Floating Elements */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="absolute -top-4 -right-4 bg-red-500 text-white p-4 rounded-xl shadow-lg"
+            >
+              <FiEye className="text-2xl" />
+            </motion.div>
+            
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+              className="absolute -bottom-4 -left-4 bg-amber-500 text-white p-4 rounded-xl shadow-lg"
+            >
+              <FiBarChart2 className="text-2xl" />
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Wave Divider */}
-      <div className="relative h-24 overflow-hidden">
-        <svg
-          viewBox="0 0 1200 120"
-          preserveAspectRatio="none"
-          className="absolute w-full h-full"
-        >
-          <path
-            d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-            opacity=".25"
-            className="fill-current text-purple-900"
-          ></path>
-          <path
-            d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z"
-            opacity=".5"
-            className="fill-current text-purple-800"
-          ></path>
-          <path
-            d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"
-            className="fill-current text-purple-600"
-          ></path>
-        </svg>
-      </div>
+      {/* Stats Section */}
+      <section className="relative py-16 bg-gradient-to-r from-amber-50 to-red-50 border-y border-amber-200">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-brown-800 mb-4">Making Real Impact</h2>
+            <p className="text-xl text-brown-600">Join thousands who are already creating change</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {platformStats.map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-xl p-6 shadow-lg border border-amber-100"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <div className="text-amber-600 text-xl">{stat.icon}</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-brown-800">{stat.value}</div>
+                    <div className="text-brown-600">{stat.label}</div>
+                    <div className="text-sm text-amber-600">{stat.change}</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Community Highlights */}
+      <section className="relative py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-brown-800 mb-4">Community Success Stories</h2>
+            <p className="text-xl text-brown-600">See how voices become actions</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {communityHighlights.map((story, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
+                className="bg-gradient-to-br from-amber-50 to-red-50 rounded-xl p-6 shadow-lg border border-amber-100"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-brown-800">{story.title}</h3>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    story.status === 'Completed' ? 'bg-green-100 text-green-600' :
+                    story.status === 'In Progress' ? 'bg-amber-100 text-amber-600' :
+                    'bg-blue-100 text-blue-600'
+                  }`}>
+                    {story.status}
+                  </span>
+                </div>
+                <p className="text-brown-700 mb-4">{story.description}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-brown-600">
+                    <FiUsers />
+                    <span>{story.supporters} supporters</span>
+                  </div>
+                  <FiHeart className="text-red-500" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="relative py-20 bg-gradient-to-r from-brown-600 to-red-600">
+        <div className="max-w-4xl mx-auto text-center px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-4xl lg:text-5xl font-bold text-white mb-6"
+          >
+            Ready to Make Your Voice Heard?
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-amber-100 mb-8"
+          >
+            Join 75,000+ users who are already creating change in their communities. 
+            Your anonymity is guaranteed, your impact is real.
+          </motion.p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleExplore}
+            className="bg-white text-brown-600 px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            Start Your Anonymous Journey Today
+          </motion.button>
+        </div>
+      </section>
 
       <style jsx>{`
-        .bg-size-200 {
-          background-size: 200% 200%;
-        }
-        .animate-gradient {
-          animation: gradient 3s ease infinite;
-        }
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        .bg-grid-pattern {
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
       `}</style>
     </div>
