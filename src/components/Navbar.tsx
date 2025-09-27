@@ -1,27 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiMenu, FiX } from 'react-icons/fi';
-import { FaEthereum, FaHeart } from 'react-icons/fa';
+import { FaEthereum } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
 import LOGOS from '../assets/logo.png';
-import "../index.css"
+import "../index.css";
 import { MdExplore } from "react-icons/md";
 import { FaPlusCircle } from "react-icons/fa";
 
-const Navbar = () => {
-  const [walletAddress, setWalletAddress] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+// Interface for navigation items
+interface NavItem {
+  label: string;
+  icon: React.ComponentType<{ size?: number | string; className?: string }>;
+  path: string;
+}
+
+// Interface for window.ethereum (MetaMask)
+interface EthereumWindow extends Window {
+  ethereum?: {
+    request: (args: { method: string; params?: any[] }) => Promise<any>;
+    on: (event: string, callback: (accounts: string[]) => void) => void;
+  };
+}
+
+// Extend the global Window interface
+declare const window: EthereumWindow;
+
+const Navbar: React.FC = () => {
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const location = useLocation();
 
   // Check if wallet is already connected on component mount
   useEffect(() => {
-    const checkWalletConnection = async () => {
+    const checkWalletConnection = async (): Promise<void> => {
       if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setIsConnected(true);
+        try {
+          const accounts: string[] = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setWalletAddress(accounts[0]);
+            setIsConnected(true);
+          }
+        } catch (error) {
+          console.error('Error checking wallet connection:', error);
         }
       }
     };
@@ -29,19 +51,27 @@ const Navbar = () => {
     checkWalletConnection();
 
     // Listen for account changes
-    window.ethereum?.on('accountsChanged', (accounts) => {
+    const handleAccountsChanged = (accounts: string[]): void => {
       if (accounts.length === 0) {
         setWalletAddress('');
         setIsConnected(false);
       } else {
         setWalletAddress(accounts[0]);
       }
-    });
+    };
+
+    window.ethereum?.on('accountsChanged', handleAccountsChanged);
+
+    // Cleanup listener on unmount
+    return () => {
+      // Note: MetaMask does not provide a reliable way to remove specific listeners,
+      // so we rely on useEffect cleanup to avoid memory leaks
+    };
   }, []);
 
   // Add scroll effect
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = (): void => {
       setIsScrolled(window.scrollY > 50);
     };
 
@@ -51,15 +81,15 @@ const Navbar = () => {
 
   // Handle outside click to close menu
   useEffect(() => {
-    const handleOutsideClick = (event) => {
+    const handleOutsideClick = (event: MouseEvent): void => {
       const mobileMenuButton = document.querySelector('#mobile-menu-button');
       const mobileMenu = document.querySelector('#mobile-menu');
 
       if (
         isMenuOpen &&
         mobileMenu &&
-        !mobileMenu.contains(event.target) &&
-        (!mobileMenuButton || !mobileMenuButton.contains(event.target))
+        !mobileMenu.contains(event.target as Node) &&
+        (!mobileMenuButton || !mobileMenuButton.contains(event.target as Node))
       ) {
         setIsMenuOpen(false);
       }
@@ -75,13 +105,13 @@ const Navbar = () => {
   }, [isMenuOpen]);
 
   // Close the mobile menu when a menu item is clicked
-  const closeMenu = () => {
+  const closeMenu = (): void => {
     setIsMenuOpen(false);
   };
 
-  const add0GMainnetNetwork = async () => {
+  const add0GMainnetNetwork = async (): Promise<void> => {
     try {
-      await window.ethereum.request({
+      await window.ethereum?.request({
         method: 'wallet_addEthereumChain',
         params: [{
           chainId: '0x4105', // 16661 in hexadecimal
@@ -100,13 +130,13 @@ const Navbar = () => {
     }
   };
 
-  const switchTo0GMainnet = async () => {
+  const switchTo0GMainnet = async (): Promise<void> => {
     try {
-      await window.ethereum.request({
+      await window.ethereum?.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x4105' }] // 16661 in hexadecimal
       });
-    } catch (switchError) {
+    } catch (switchError: any) {
       // This error code indicates that the chain has not been added to MetaMask
       if (switchError.code === 4902) {
         await add0GMainnetNetwork();
@@ -116,11 +146,11 @@ const Navbar = () => {
     }
   };
 
-  const connectWallet = async () => {
+  const connectWallet = async (): Promise<void> => {
     if (window.ethereum) {
       try {
         // Request account access
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts: string[] = await window.ethereum.request({ method: 'eth_requestAccounts' });
         
         // Switch to 0G Mainnet
         await switchTo0GMainnet();
@@ -135,15 +165,15 @@ const Navbar = () => {
     }
   };
 
-  const shortenAddress = (address) => {
+  const shortenAddress = (address: string): string => {
     if (!address) return '';
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path: string): boolean => location.pathname === path;
 
   // Navigation items data
-  const navItems = [
+  const navItems: NavItem[] = [
     { label: 'Explore', icon: MdExplore, path: '/explore' },
     { label: 'Search', icon: FiSearch, path: '/search' },
     { label: 'Create Post', icon: FaPlusCircle, path: '/create-post' },
