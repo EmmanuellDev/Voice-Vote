@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserProvider, Contract } from 'ethers';
-import { abi } from '../abi/NullifierStorageABI.json';
+import { abi } from '../abis/NullifierStorageABI.json';
 import {
   AnonAadhaarProvider,
   LogInWithAnonAadhaar,
@@ -8,7 +8,7 @@ import {
   AnonAadhaarProof,
 } from "@anon-aadhaar/react";
 import { motion } from 'framer-motion';
-import ErrorBoundary from "../components/ErrorBoundary";
+import ErrorBoundary from "../components/errorBoundry";
 import { BD_PORT } from '../const';
 
 // Constants
