@@ -128,8 +128,91 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
             response = agent.prompt(prompt)
             print(f"Alith Agent Response: {response}")
 
-           
 
+
+
+            # Parse JSON response
+            try:
+                # Clean the response and extract JSON
+                cleaned_response = response.strip()
+
+                # Try to fix incomplete JSON by adding missing closing brace
+                if cleaned_response.startswith('{') and not cleaned_response.endswith('}'):
+                    # Check if it looks like incomplete JSON
+                    if '"hashtags":' in cleaned_response and cleaned_response.count('[') > cleaned_response.count(']'):
+                        # Add missing closing bracket and brace
+                        cleaned_response += ']}'
+                    elif not cleaned_response.endswith('}'):
+                        # Add missing closing brace
+                        cleaned_response += '}'
+
+          
+
+                # Clean and format hashtags
+                if isinstance(result['hashtags'], list):
+                    
+                    cleaned_hashtags = []
+                    for tag in result['hashtags']:
+                        
+                        clean_tag = str(tag).strip()
+                        # Remove spaces and special characters except alphanumeric
+                        clean_tag = re.sub(r'[^a-zA-Z0-9]', '', clean_tag)
+                        if clean_tag and not clean_tag.startswith('#'):
+                            
+                            clean_tag = '#' + clean_tag
+                        if clean_tag and len(clean_tag) > 1:
+                            
+                            cleaned_hashtags.append(clean_tag)
+                    result['hashtags'] = cleaned_hashtags
+
+                print(f"Successfully processed with Alith Agent: {result}")
+                return jsonify(result)
+
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"Alith JSON parsing error: {e}")
+                print(f"Raw Alith response: {response}")
+
+                # Enhanced fallback response
+                fallback_caption = f"Civic issue reported: {user_content.strip()}. Immediate attention required."
+
+                # Smart hashtag generation based on content
+                hashtags = ["#civicissue", "#community"]
+                content_lower = user_content.lower()
+
+                if any(word in content_lower for word in ['road', 'street', 'pothole', 'traffic']):
+                    hashtags.append("#infrastructure")
+                elif any(word in content_lower for word in ['water', 'drainage', 'flood', 'pipe']):
+                    hashtags.append("#watersupply")
+                elif any(word in content_lower for word in ['light', 'electricity', 'power']):
+                    hashtags.append("#utilities")
+                elif any(word in content_lower for word in ['waste', 'garbage', 'trash', 'clean']):
+                    hashtags.append("#sanitation")
+                else:
+                    hashtags.append("#infrastructure")
+
+                fallback_response = {
+                    "caption": fallback_caption[:100],
+                    "hashtags": hashtags
+                }
+
+                print(f"Using Alith fallback response: {fallback_response}")
+                return jsonify(fallback_response)
+
+        except Exception as agent_error:
+            print(f"Alith Agent error: {agent_error}")
+            return jsonify({
+                'error': 'AI processing failed. Please try again later.'
+            }), 500
+
+    except Exception as e:
+        print(f"Endpoint error: {e}")
+        return jsonify({
+            'error': 'Service temporarily unavailable. Please try again later.'
+        }), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy', 'service': 'alith-ai-suggestion-api'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
