@@ -188,7 +188,17 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
                 # Smart hashtag generation based on content
                 hashtags = ["#civicissue", "#community"]
                 content_lower = user_content.lower()
- 
+
+                if any(word in content_lower for word in ['road', 'street', 'pothole', 'traffic']):
+                    hashtags.append("#infrastructure")
+                elif any(word in content_lower for word in ['water', 'drainage', 'flood', 'pipe']):
+                    hashtags.append("#watersupply")
+                elif any(word in content_lower for word in ['light', 'electricity', 'power']):
+                    hashtags.append("#utilities")
+                elif any(word in content_lower for word in ['waste', 'garbage', 'trash', 'clean']):
+                    hashtags.append("#sanitation")
+                else:
+                    hashtags.append("#infrastructure")
 
                 fallback_response = {
                     "caption": fallback_caption[:100],
