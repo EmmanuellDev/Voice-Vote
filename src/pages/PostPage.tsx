@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FiUpload, FiX, FiHash, FiZap } from 'react-icons/fi';
+import { FiUpload, FiX, FiHash, FiZap, FiImage, FiEdit3 } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 import { BD_PORT, AI_URL_PORT } from '../const';
+import { FaMagic, FaRegLightbulb, FaShieldAlt } from 'react-icons/fa';
 
 const CreatePost: React.FC = () => {
   const [caption, setCaption] = useState<string>('');
@@ -16,7 +18,7 @@ const CreatePost: React.FC = () => {
   const [aiSuggestion, setAiSuggestion] = useState<{ caption: string; hashtags: string[] } | null>(null);
   const navigate = useNavigate();
 
-  // Pinata IPFS configuration (should be in environment variables in production)
+  // Pinata IPFS configuration
   const pinataApiKey: string = 'c5f3a546a5f420344f13';
   const pinataSecretApiKey: string = '4d2785eeba3eda195aaf2aedd953089ac2571db59ccae266ee96170bb6c3c175';
 
@@ -41,7 +43,9 @@ const CreatePost: React.FC = () => {
   const removeImage = () => {
     setImageFile(null);
     setPreviewUrl('');
-    URL.revokeObjectURL(previewUrl);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
   };
 
   const uploadToIPFS = async (): Promise<string> => {
@@ -53,9 +57,9 @@ const CreatePost: React.FC = () => {
     formData.append('file', imageFile);
 
     const metadata = JSON.stringify({
-      name: `0g-post-${Date.now()}`,
+      name: `voicevote-post-${Date.now()}`,
       keyvalues: {
-        app: '0g-app',
+        app: 'voicevote-app',
       },
     });
     formData.append('pinataMetadata', metadata);
@@ -104,9 +108,7 @@ const CreatePost: React.FC = () => {
 
       if (response.data) {
         setAiSuggestion(response.data);
-        // Auto-populate the fields with AI suggestions
         setCaption(response.data.caption);
-        // Convert hashtags array to comma-separated string (keep # symbols from AI)
         const hashtagsString = response.data.hashtags
           .map((tag: string) => (tag.startsWith('#') ? tag : `#${tag}`))
           .join(', ');
@@ -117,7 +119,6 @@ const CreatePost: React.FC = () => {
     } catch (err: any) {
       console.error('AI suggestion error:', err);
       if (err.response?.status === 400) {
-        // Content filtering error
         setError(err.response.data.error || 'Content not appropriate for civic reporting. Please focus on community issues.');
       } else if (err.response?.status === 500) {
         setError('AI service temporarily unavailable. Please try again later.');
@@ -174,7 +175,7 @@ const CreatePost: React.FC = () => {
       );
 
       if (response.data && response.data.success) {
-        setSuccess('Post created successfully!');
+        setSuccess('Post created successfully! Redirecting...');
         setTimeout(() => {
           navigate('/explore');
         }, 1500);
@@ -189,164 +190,252 @@ const CreatePost: React.FC = () => {
     }
   };
 
+  const tips = [
+    {
+      icon: <FaShieldAlt className="text-amber-600" />,
+      text: "Your post will be completely anonymous"
+    },
+    {
+      icon: <FaRegLightbulb className="text-amber-600" />,
+      text: "Focus on civic issues and community concerns"
+    },
+    {
+      icon: <FiHash className="text-amber-600" />,
+      text: "Use relevant hashtags for better discovery"
+    }
+  ];
+
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-19 py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-      </div>
-      <div className="relative z-10 max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-cyan-600 via-sky-500 to-blue-500 flex items-center justify-center mb-5 shadow-[0_0_25px_rgba(56,189,248,0.9)] rounded-md transform hover:scale-110 transition-transform duration-500">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2-2z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-blue-200 drop-shadow-[0_0_10px_rgba(56,189,248,0.45)]">
-            Create New Post
-          </h1>
-          <p className="text-sm text-gray-300 mt-2">Share your anonymous creation with the world</p>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-xl border border-cyan-600/30 hover:border-sky-400/60 transition-all duration-300 hover:shadow-[0_0_25px_-8px_rgba(56,189,248,0.35)]">
-          {error && (
-            <div className="mb-4 p-3 bg-red-900/25 border border-red-500 rounded-xl text-red-300 animate-fade-in">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" />
-                </svg>
-                <span>{error}</span>
-              </div>
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 p-3 bg-green-900/25 border border-green-500 rounded-xl text-green-300 animate-fade-in">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>{success}</span>
-              </div>
-            </div>
-          )}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label className="block text-cyan-200 mb-2 text-sm font-medium">Upload Image</label>
-              {previewUrl ? (
-                <div className="relative group">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full h-64 object-cover rounded-xl border border-cyan-600/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-2 bg-slate-900/50 rounded-full text-cyan-100 hover:bg-red-600 transition-colors"
-                  >
-                    <FiX className="w-5 h-5" />
-                  </button>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 pt-20 py-8 px-4 sm:px-6 lg:px-8 overflow-hidden"
+    >
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+
+      <div className="max-w-4xl mx-auto grid lg:grid-cols-3 gap-8">
+        {/* Left Side - Tips and Guidelines */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="lg:col-span-1"
+        >
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-lg p-6 sticky top-24">
+            <h2 className="text-2xl font-bold text-brown-800 mb-4">Create a Post</h2>
+            <p className="text-brown-600 mb-6">
+              Share community concerns and civic issues anonymously. Your voice matters.
+            </p>
+            
+            <div className="space-y-4 mb-6">
+              <h3 className="font-semibold text-brown-700 flex items-center">
+                <FaMagic className="mr-2 text-amber-600" />
+                Quick Tips
+              </h3>
+              {tips.map((tip, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center mt-0.5">
+                    {tip.icon}
+                  </div>
+                  <p className="text-sm text-brown-600">{tip.text}</p>
                 </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-cyan-600/30 rounded-xl cursor-pointer hover:border-sky-400/60 transition-colors bg-slate-900/50">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <FiUpload className="w-10 h-10 mb-3 text-cyan-300" />
-                    <p className="mb-2 text-sm text-cyan-200">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-300">
-                      PNG, JPG, GIF (Max. 10MB)
-                    </p>
+              ))}
+            </div>
+
+            <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+              <h4 className="font-semibold text-amber-700 mb-2">Community Guidelines</h4>
+              <ul className="text-xs text-amber-600 space-y-1">
+                <li>• Focus on civic and community issues</li>
+                <li>• Be respectful and constructive</li>
+                <li>• Avoid personal information</li>
+                <li>• Use clear, descriptive captions</li>
+              </ul>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Right Side - Form */}
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="lg:col-span-2"
+        >
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <FiEdit3 className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-brown-800 mb-2">Share Your Concern</h1>
+              <p className="text-brown-600">Post anonymously to the community</p>
+            </div>
+
+            {/* Alerts */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span>{error}</span>
+                </div>
+              </motion.div>
+            )}
+
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span>{success}</span>
+                </div>
+              </motion.div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              {/* Image Upload */}
+              <div className="mb-6">
+                <label className="block text-brown-700 mb-3 text-sm font-semibold">Upload Image</label>
+                {previewUrl ? (
+                  <div className="relative group">
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-64 object-cover rounded-xl border-2 border-amber-200 shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-red-600 hover:bg-red-50 transition-colors shadow-lg"
+                    >
+                      <FiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-amber-300 rounded-xl cursor-pointer hover:border-amber-400 transition-colors bg-amber-50/50">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <FiUpload className="w-12 h-12 mb-4 text-amber-500" />
+                      <p className="mb-2 text-lg font-semibold text-brown-700">
+                        Click to upload image
+                      </p>
+                      <p className="text-sm text-brown-500">
+                        PNG, JPG, GIF (Max. 10MB)
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Caption Field */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label htmlFor="caption" className="text-sm font-semibold text-brown-700">
+                    Concern Description
+                  </label>
+                  <motion.button
+                    type="button"
+                    onClick={handleAiSuggest}
+                    disabled={isAiSuggesting || !caption.trim()}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-700 bg-amber-100 border border-amber-300 rounded-xl hover:bg-amber-200 hover:border-amber-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAiSuggesting ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border border-amber-600 border-t-transparent rounded-full"></div>
+                        AI Working...
+                      </>
+                    ) : (
+                      <>
+                        <FiZap className="w-4 h-4" />
+                        Enhance with AI
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+                <textarea
+                  id="caption"
+                  value={caption}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-amber-200 bg-white text-brown-800 placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all resize-none"
+                  placeholder="Describe the community concern or civic issue... (e.g., water problem in sector 15, road damage near school, etc.)"
+                  rows={4}
+                  maxLength={2200}
+                />
+                <p className="mt-2 text-sm text-brown-500">
+                  Describe the issue clearly. Use AI enhancement for better visibility.
+                </p>
+              </div>
+
+              {/* Hashtags Field */}
+              <div className="mb-8">
+                <label htmlFor="hashtags" className="block mb-3 text-sm font-semibold text-brown-700">
+                  Hashtags
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiHash className="w-5 h-5 text-amber-500" />
                   </div>
                   <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageChange}
+                    id="hashtags"
+                    type="text"
+                    value={hashtags}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHashtags(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-amber-200 bg-white text-brown-800 placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all"
+                    placeholder="community, infrastructure, safety, environment"
                   />
-                </label>
-              )}
-            </div>
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="caption" className="text-sm font-medium text-cyan-200">
-                  Caption
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAiSuggest}
-                  disabled={isAiSuggesting || !caption.trim()}
-                  className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-cyan-300 bg-slate-900/50 border border-cyan-600/30 rounded-xl hover:bg-slate-900/70 hover:border-sky-400/60 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isAiSuggesting ? (
-                    <>
-                      <div className="animate-spin h-3 w-3 border border-cyan-300 border-t-transparent rounded-full"></div>
-                      Suggesting...
-                    </>
-                  ) : (
-                    <>
-                      <FiZap className="w-3 h-3" />
-                      AI Suggest
-                    </>
-                  )}
-                </button>
-              </div>
-              <textarea
-                id="caption"
-                value={caption}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-cyan-600/30 text-cyan-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition"
-                placeholder="What's this post about? (e.g., water problem, road damage, etc.)"
-                rows={3}
-                maxLength={2200}
-              />
-              <p className="mt-1 text-xs text-gray-300">
-                Enter a brief description and click "AI Suggest" to get an enhanced caption and hashtags
-              </p>
-            </div>
-            <div className="mb-6">
-              <label htmlFor="hashtags" className="block mb-1 text-sm font-medium text-cyan-200">
-                Hashtags
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiHash className="w-5 h-5 text-cyan-300" />
                 </div>
-                <input
-                  id="hashtags"
-                  type="text"
-                  value={hashtags}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHashtags(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-cyan-600/30 text-cyan-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition"
-                  placeholder="comma,separated,values (include # for AI suggestions)"
-                />
+                <p className="mt-2 text-sm text-brown-500">
+                  Separate with commas. AI suggestions will include # symbols.
+                </p>
               </div>
-              <p className="mt-1 text-xs text-gray-300">
-                Separate with commas (e.g., anon, art, web3) and include # for AI suggestions (e.g., #anon, #art, #web3)
-              </p>
-            </div>
-            <button
-              type="submit"
-              disabled={isUploading}
-              className="w-full py-3 font-bold text-cyan-100 rounded-xl transition-all border border-cyan-600/25 hover:border-sky-400/60 bg-slate-900/20 hover:bg-slate-900/30"
-            >
-              {isUploading ? (
-                <span className="flex justify-center items-center gap-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-cyan-500"></div>
-                  Uploading...
-                </span>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 inline mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Post
-                </>
-              )}
-            </button>
-          </form>
-        </div>
+
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                disabled={isUploading}
+                whileHover={{ scale: isUploading ? 1 : 1.02 }}
+                whileTap={{ scale: isUploading ? 1 : 0.98 }}
+                className="w-full py-4 font-bold text-white rounded-xl transition-all bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              >
+                {isUploading ? (
+                  <span className="flex justify-center items-center gap-3">
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                    Publishing Your Concern...
+                  </span>
+                ) : (
+                  <span className="flex justify-center items-center gap-3">
+                    <FiImage className="w-5 h-5" />
+                    Publish Anonymously
+                  </span>
+                )}
+              </motion.button>
+            </form>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -5,6 +5,8 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import dp from '../assets/dp.png';
 import { BD_PORT } from '../const';
+import { FiEdit, FiSettings, FiShare, FiCalendar, FiMapPin, FiCheckCircle, FiTrendingUp, FiImage } from 'react-icons/fi';
+import { FaEthereum, FaRegHeart, FaRegComment, FaFire, FaSeedling } from 'react-icons/fa';
 
 // Interface for user data
 interface UserInfo {
@@ -16,6 +18,7 @@ interface UserInfo {
   lastLogin?: string;
   kycHash?: string;
   userLevel?: 'super_active' | 'active' | 'inactive';
+  bio?: string;
 }
 
 // Interface for post data
@@ -25,6 +28,9 @@ interface Post {
   caption?: string;
   likeCount?: number;
   dislikeCount?: number;
+  commentCount?: number;
+  createdAt?: string;
+  urgency?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 // Interface for dashboard API response
@@ -57,12 +63,13 @@ const ProfilePage: React.FC = () => {
   const [postsError, setPostsError] = useState<string | null>(null);
   const [totalLikes, setTotalLikes] = useState<number>(0);
   const [totalDislikes, setTotalDislikes] = useState<number>(0);
+  const [totalComments, setTotalComments] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<'posts' | 'stats' | 'activity'>('posts');
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuthAndWallet = async (): Promise<void> => {
       const token = localStorage.getItem('token');
-      console.log('Token exists:', !!token);
       
       if (!token) {
         setIsLoading(false);
@@ -98,8 +105,10 @@ const ProfilePage: React.FC = () => {
     if (posts && posts.length > 0) {
       const likes = posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
       const dislikes = posts.reduce((sum, post) => sum + (post.dislikeCount || 0), 0);
+      const comments = posts.reduce((sum, post) => sum + (post.commentCount || 0), 0);
       setTotalLikes(likes);
       setTotalDislikes(dislikes);
+      setTotalComments(comments);
     }
   }, [posts]);
 
@@ -112,17 +121,12 @@ const ProfilePage: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      console.log('Making request with token:', token.substring(0, 20) + '...');
-      
       const response = await axios.get<DashboardResponse>(`${BD_PORT}/auth/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
-      console.log('Response status:', response.status);
-      console.log('Response data:', response.data);
 
       if (response.data.success) {
         const dashboardData = response.data.dashboard;
@@ -170,20 +174,40 @@ const ProfilePage: React.FC = () => {
     navigate('/login');
   };
 
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case 'critical': return 'bg-red-500';
+      case 'high': return 'bg-orange-500';
+      case 'medium': return 'bg-amber-500';
+      case 'low': return 'bg-brown-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getUserLevelBadge = (level: string) => {
+    switch (level) {
+      case 'super_active':
+        return { color: 'from-red-500 to-amber-500', text: 'Super Active', icon: <FaFire /> };
+      case 'active':
+        return { color: 'from-amber-500 to-yellow-500', text: 'Active', icon: <FiTrendingUp /> };
+      default:
+        return { color: 'from-brown-500 to-amber-500', text: 'Member', icon: <FaSeedling /> };
+    }
+  };
+
+  const levelBadge = userData?.userLevel ? getUserLevelBadge(userData.userLevel) : getUserLevelBadge('inactive');
+
   if (isLoading) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden"
+        className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 flex items-center justify-center overflow-hidden pt-20"
       >
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-        </div>
-        <div className="flex flex-col items-center bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-cyan-500 mb-4"></div>
-          <p className="text-cyan-200 font-medium">Loading profile data...</p>
+        <div className="flex flex-col items-center bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-amber-200 shadow-lg">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-500 mb-4"></div>
+          <p className="text-brown-700 font-medium">Loading your profile...</p>
+          <p className="text-brown-500 text-sm mt-2">Getting your community data</p>
         </div>
       </motion.div>
     );
@@ -194,25 +218,21 @@ const ProfilePage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden"
+        className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 flex items-center justify-center overflow-hidden pt-20"
       >
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-        </div>
-        <div className="max-w-md mx-auto bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30 text-center">
-          <div className="text-red-300 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="max-w-md mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-amber-200 shadow-lg text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-cyan-100 mb-2">Error Loading Profile</h3>
-          <p className="text-gray-300 mb-6">{error}</p>
+          <h3 className="text-2xl font-bold text-brown-800 mb-2">Profile Access Error</h3>
+          <p className="text-brown-600 mb-6">{error}</p>
           <div className="space-y-3">
             {error.includes('login') || error.includes('Session expired') ? (
               <button
                 onClick={handleLogin}
-                className="w-full py-3 font-bold text-cyan-100 rounded-xl transition-all border border-cyan-600/25 hover:border-sky-400/60 bg-slate-900/20 hover:bg-slate-900/30"
+                className="w-full py-3 font-bold text-white rounded-xl transition-all bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 shadow-lg"
               >
                 Go to Login
               </button>
@@ -220,14 +240,14 @@ const ProfilePage: React.FC = () => {
             {!walletAddress && !error.includes('login') && (
               <button
                 onClick={handleConnectWallet}
-                className="w-full py-3 font-bold text-cyan-100 rounded-xl transition-all border border-cyan-600/25 hover:border-sky-400/60 bg-slate-900/20 hover:bg-slate-900/30"
+                className="w-full py-3 font-bold text-white rounded-xl transition-all bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 shadow-lg"
               >
                 Connect Wallet
               </button>
             )}
             <button
               onClick={() => window.location.reload()}
-              className="w-full py-3 font-bold text-cyan-100 rounded-xl transition-all border border-cyan-600/25 hover:border-sky-400/60 bg-slate-900/20 hover:bg-slate-900/30"
+              className="w-full py-3 font-bold text-brown-700 rounded-xl transition-all border border-amber-300 hover:border-amber-400 bg-amber-50 hover:bg-amber-100"
             >
               Refresh Page
             </button>
@@ -241,176 +261,259 @@ const ProfilePage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-19 overflow-hidden py-12 px-4 sm:px-6 lg:px-8"
+      className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 pt-20 overflow-hidden py-8 px-4 sm:px-6 lg:px-8"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-      </div>
-      <div className="relative z-10 max-w-4xl mx-auto">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+
+      <div className="max-w-6xl mx-auto">
+        {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30 hover:border-sky-400/60 transition-all duration-300 hover:shadow-[0_0_25px_-8px_rgba(56,189,248,0.35)]"
+          className="bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-lg p-8 mb-6"
         >
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8">
-            <img
-              src={profilePicture}
-              alt="Profile"
-              className="w-24 h-24 md:w-32 md:h-32 object-cover object-center aspect-square rounded-full border-2 border-cyan-600/30 shadow-[0_0_15px_rgba(56,189,248,0.9)]"
-              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = dp;
-              }}
-            />
-            <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-center md:space-x-6 mb-4">
-                <h2 className="text-xl font-extrabold text-cyan-100 flex items-center">
-                  {userData?.username || 'User ID'}
-                  <span className="ml-2 flex items-center border-cyan-500 border-2 p-2 rounded-full">
-                    <span className="text-cyan-300 text-xs font-semibold">
-                      {userData?.userLevel === 'super_active' ? 'Verified' : 
-                       userData?.userLevel === 'active' ? 'Verified' : 'Verified'}
-                    </span>
-                    <svg className="w-4 h-4 ml-1 text-cyan-300" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                  </span>
-                </h2>
-              </div>
-              <div className="flex space-x-8 mb-2">
-                <div className="text-center">
-                  <span className="font-bold text-cyan-100">{posts?.length || 0}</span>
-                  <span className="text-gray-300 block text-sm">Posts</span>
-                </div>
-                <div className="text-center">
-                  <span className="font-bold text-cyan-100">{totalLikes}</span>
-                  <span className="text-gray-300 block text-sm">Likes</span>
-                </div>
-                <div className="text-center">
-                  <span className="font-bold text-cyan-100">{totalDislikes}</span>
-                  <span className="text-gray-300 block text-sm">Dislikes</span>
+          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
+            {/* Profile Picture */}
+            <div className="relative">
+              <img
+                src={profilePicture}
+                alt="Profile"
+                className="w-32 h-32 object-cover rounded-2xl border-4 border-amber-200 shadow-lg"
+                onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = dp;
+                }}
+              />
+              <div className="absolute -bottom-2 -right-2">
+                <div className={`bg-gradient-to-r ${levelBadge.color} text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg`}>
+                  {levelBadge.icon}
+                  {levelBadge.text}
                 </div>
               </div>
-              {userData?.walletAddress && (
-                <div className="mb-4">
-                  <span className="text-gray-300 text-xs">Wallet:</span>
-                  <span className="ml-2 text-cyan-100 text-xs break-all">{userData.walletAddress}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-2 text-cyan-100 mb-4">
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
                 <div>
-                  <span className="text-gray-300 text-sm">State: </span>
-                  <span className="font-medium capitalize">{userData?.state || 'Not specified'}</span>
+                  <h1 className="text-3xl font-bold text-brown-800 mb-2">
+                    {userData?.username || 'Anonymous User'}
+                  </h1>
+                  {userData?.bio && (
+                    <p className="text-brown-600 max-w-2xl">{userData.bio}</p>
+                  )}
                 </div>
-                <div>
-                  <span className="text-gray-300 text-sm">Member since: </span>
-                  <span className="font-medium">
-                    {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
-                  </span>
+                <div className="flex space-x-3 mt-4 lg:mt-0">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-xl border border-amber-200 hover:bg-amber-200 transition-colors">
+                    <FiEdit size={16} />
+                    Edit
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-white text-brown-700 rounded-xl border border-amber-200 hover:bg-amber-50 transition-colors">
+                    <FiSettings size={16} />
+                    Settings
+                  </button>
                 </div>
-                <div>
-                  <span className="text-gray-300 text-sm">Last login: </span>
-                  <span className="font-medium">
-                    {userData?.lastLogin ? new Date(userData.lastLogin).toLocaleString() : 'Never'}
-                  </span>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <div className="text-2xl font-bold text-brown-800">{posts?.length || 0}</div>
+                  <div className="text-brown-600 text-sm">Posts</div>
                 </div>
-                <div>
-                  <span className="text-gray-300 text-sm">KYC Status: </span>
-                  <span className="font-medium">
-                    {userData?.kycHash ? 'Verified on-Chain' : 'No'}
+                <div className="text-center p-3 bg-red-50 rounded-xl border border-red-200">
+                  <div className="text-2xl font-bold text-brown-800">{totalLikes}</div>
+                  <div className="text-brown-600 text-sm">Likes</div>
+                </div>
+                <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <div className="text-2xl font-bold text-brown-800">{totalComments}</div>
+                  <div className="text-brown-600 text-sm">Comments</div>
+                </div>
+                <div className="text-center p-3 bg-brown-50 rounded-xl border border-brown-200">
+                  <div className="text-2xl font-bold text-brown-800">{totalDislikes}</div>
+                  <div className="text-brown-600 text-sm">Engagement</div>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2 text-brown-600">
+                  <FaEthereum className="text-amber-600" />
+                  <span className="font-medium">Wallet:</span>
+                  <span className="truncate">{userData?.walletAddress?.substring(0, 12)}...</span>
+                </div>
+                <div className="flex items-center gap-2 text-brown-600">
+                  <FiMapPin className="text-amber-600" />
+                  <span className="font-medium">Location:</span>
+                  <span>{userData?.state || 'Not specified'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-brown-600">
+                  <FiCalendar className="text-amber-600" />
+                  <span className="font-medium">Member since:</span>
+                  <span>{userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-brown-600">
+                  <FiCheckCircle className="text-amber-600" />
+                  <span className="font-medium">KYC Status:</span>
+                  <span className={userData?.kycHash ? 'text-green-600 font-semibold' : 'text-red-600'}>
+                    {userData?.kycHash ? 'Verified' : 'Pending'}
                   </span>
                 </div>
               </div>
             </div>
           </div>
         </motion.div>
-      </div>
-      <hr className="border-t border-cyan-600/30 my-4 max-w-4xl mx-auto" />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {postsLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-cyan-500"></div>
-          </div>
-        ) : postsError ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12 bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30 hover:border-sky-400/60 transition-all duration-300 hover:shadow-[0_0_25px_-8px_rgba(56,189,248,0.35)]"
-          >
-            <div className="text-red-300 mb-4">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-cyan-100 mb-2">Error Loading Posts</h3>
-            <p className="text-gray-300 mb-4">{postsError}</p>
-            <button
-              onClick={fetchDashboardData}
-              className="w-full py-3 font-bold text-cyan-100 rounded-xl transition-all border border-cyan-600/25 hover:border-sky-400/60 bg-slate-900/20 hover:bg-slate-900/30"
-            >
-              Retry
-            </button>
-          </motion.div>
-        ) : posts.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12 bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30 hover:border-sky-400/60 transition-all duration-300 hover:shadow-[0_0_25px_-8px_rgba(56,189,248,0.35)]"
-          >
-            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-cyan-600 via-sky-500 to-blue-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(56,189,248,0.9)]">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-cyan-100 mb-2">No Posts Yet</h3>
-            <p className="text-gray-300">When you share photos and videos, they'll appear here.</p>
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {posts.map((post, index) => (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                key={post.postId}
-                className="group relative block overflow-hidden rounded-xl border border-cyan-600/30 hover:border-sky-400/60 transition-all duration-300 hover:shadow-[0_0_15px_rgba(56,189,248,0.35)]"
+
+        {/* Tabs */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-lg p-6 mb-6">
+          <div className="flex space-x-4 border-b border-amber-200 pb-4">
+            {[
+              { id: 'posts' as const, label: 'My Posts', icon: <FiImage /> },
+              { id: 'stats' as const, label: 'Statistics', icon: <FiTrendingUp /> },
+              { id: 'activity' as const, label: 'Activity', icon: <FaFire /> }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-amber-500 to-red-500 text-white shadow-lg'
+                    : 'text-brown-600 hover:bg-amber-50'
+                }`}
               >
-                <Link to={`/posts/${post.postId}`}>
-                  <img
-                    src={post.imageUrl}
-                    alt="Post"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
-                      e.currentTarget.className = 'w-full h-full object-cover bg-slate-900';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
-                    <div className="text-cyan-100 text-sm truncate w-full">
-                      {post.caption || 'Untitled'}
-                    </div>
-                    <div className="absolute top-2 right-2 flex space-x-2">
-                      <span className="text-cyan-100 text-xs bg-slate-900/50 border border-green-500 px-2 py-1 rounded flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91l-.01-.01L23 10z"/>
-                        </svg>
-                        {post.likeCount || 0}
-                      </span>
-                      <span className="text-cyan-100 text-xs bg-slate-900/50 border border-red-500 px-2 py-1 rounded flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v1.91l.01.01L1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/>
-                        </svg>
-                        {post.dislikeCount || 0}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
+                {tab.icon}
+                {tab.label}
+              </button>
             ))}
           </div>
-        )}
+
+          {/* Tab Content */}
+          <div className="mt-6">
+            {activeTab === 'posts' && (
+              <div>
+                {postsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amber-500"></div>
+                  </div>
+                ) : postsError ? (
+                  <div className="text-center py-12">
+                    <div className="text-red-500 mb-4">
+                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-brown-800 mb-2">Error Loading Posts</h3>
+                    <p className="text-brown-600 mb-4">{postsError}</p>
+                    <button
+                      onClick={fetchDashboardData}
+                      className="px-6 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <FiImage className="w-10 h-10 text-amber-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-brown-800 mb-2">No Posts Yet</h3>
+                    <p className="text-brown-600 mb-4">Share your first community concern to get started!</p>
+                    <Link
+                      to="/create-post"
+                      className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-500 to-red-500 text-white rounded-xl hover:from-amber-600 hover:to-red-600 transition-all shadow-lg"
+                    >
+                      <FiEdit size={16} />
+                      Create Your First Post
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {posts.map((post, index) => (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.05 }}
+                        key={post.postId}
+                        className="group relative bg-white rounded-2xl border border-amber-200 overflow-hidden shadow-lg hover:shadow-xl transition-all"
+                      >
+                        <Link to={`/posts/${post.postId}`}>
+                          <div className="relative">
+                            <img
+                              src={post.imageUrl}
+                              alt="Post"
+                              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                                e.currentTarget.src = 'https://via.placeholder.com/400x300/FFEDD5/7C2D12?text=Image+Not+Found';
+                                e.currentTarget.className = 'w-full h-48 object-cover bg-amber-50';
+                              }}
+                            />
+                            {post.urgency && (
+                              <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-semibold text-white ${getUrgencyColor(post.urgency)}`}>
+                                {post.urgency.toUpperCase()}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-brown-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                              <div className="text-white">
+                                <p className="font-medium text-sm line-clamp-2">{post.caption || 'Community Concern'}</p>
+                                <div className="flex items-center space-x-3 text-xs opacity-90 mt-2">
+                                  <span className="flex items-center">
+                                    <FaRegHeart className="mr-1" /> {post.likeCount || 0}
+                                  </span>
+                                  <span className="flex items-center">
+                                    <FaRegComment className="mr-1" /> {post.commentCount || 0}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'stats' && (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <FiTrendingUp className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-brown-800 mb-4">Community Impact Analytics</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <div className="text-2xl font-bold text-amber-600">{posts.length}</div>
+                    <div className="text-brown-600 text-sm">Posts Shared</div>
+                  </div>
+                  <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+                    <div className="text-2xl font-bold text-red-600">{totalLikes}</div>
+                    <div className="text-brown-600 text-sm">Total Likes</div>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                    <div className="text-2xl font-bold text-green-600">{totalComments}</div>
+                    <div className="text-brown-600 text-sm">Comments</div>
+                  </div>
+                  <div className="p-4 bg-brown-50 rounded-xl border border-brown-200">
+                    <div className="text-2xl font-bold text-brown-600">{(totalLikes + totalComments) / Math.max(posts.length, 1)}</div>
+                    <div className="text-brown-600 text-sm">Avg. Engagement</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'activity' && (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <FaFire className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-brown-800 mb-2">Recent Activity</h3>
+                <p className="text-brown-600">Your community engagement history will appear here</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </motion.div>
   );
