@@ -21,9 +21,13 @@ def create_alith_agent():
             print("Groq API key not found. Cannot initialize Alith Agent.")
             return None
 
+        # Determine model (fallback to a currently supported Groq model)
+        model_name = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
+        print(f"Initializing Alith Agent with Groq model: {model_name}")
+
         # Create Alith Agent with Groq backend
         agent = Agent(
-            model="llama3-8b-8192",
+            model=model_name,
             api_key=groq_api_key,
             base_url="https://api.groq.com/openai/v1",
             preamble="""You are a specialized civic engagement AI assistant for community reporting.
