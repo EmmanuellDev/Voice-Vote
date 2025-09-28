@@ -67,6 +67,9 @@ This application is configured for deployment on Render.com with the included `r
 
 ### Environment Variables Required:
 - `GROQ_API_KEY`: Your Groq API key for AI processing
+- `GROQ_MODEL` (optional): Groq model name to use. Defaults to `llama-3.1-8b-instant` if not set.
+
+If you previously used a deprecated model (e.g., `llama3-8b-8192`), set `GROQ_MODEL` to a currently supported one like `llama-3.1-8b-instant`.
 
 ## Dependencies
 

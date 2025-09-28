@@ -21,9 +21,13 @@ def create_alith_agent():
             print("Groq API key not found. Cannot initialize Alith Agent.")
             return None
 
+        # Determine model (fallback to a currently supported Groq model)
+        model_name = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
+        print(f"Initializing Alith Agent with Groq model: {model_name}")
+
         # Create Alith Agent with Groq backend
         agent = Agent(
-            model="llama3-8b-8192",
+            model=model_name,
             api_key=groq_api_key,
             base_url="https://api.groq.com/openai/v1",
             preamble="""You are a specialized civic engagement AI assistant for community reporting.
@@ -96,10 +100,28 @@ def suggest_caption():
         # Create Alith Agent
         agent = create_alith_agent()
         if not agent:
-            print("Failed to create Alith Agent - using fallback")
-            return jsonify({
-                'error': 'AI service unavailable. Please try again later.'
-            }), 500
+            print("Failed to create Alith Agent - using fallback response")
+            # Fallback response when agent cannot be created (e.g., missing API key)
+            fallback_caption = f"Civic issue reported: {user_content.strip()}. Immediate attention required."
+            hashtags = ["#civicissue", "#community"]
+            content_lower = user_content.lower()
+
+            if any(word in content_lower for word in ['road', 'street', 'pothole', 'traffic']):
+                hashtags.append("#infrastructure")
+            elif any(word in content_lower for word in ['water', 'drainage', 'flood', 'pipe']):
+                hashtags.append("#watersupply")
+            elif any(word in content_lower for word in ['light', 'electricity', 'power']):
+                hashtags.append("#utilities")
+            elif any(word in content_lower for word in ['waste', 'garbage', 'trash', 'clean']):
+                hashtags.append("#sanitation")
+            else:
+                hashtags.append("#infrastructure")
+
+            fallback_response = {
+                "caption": fallback_caption[:100],
+                "hashtags": hashtags
+            }
+            return jsonify(fallback_response)
 
         print(f"Alith Agent created successfully for input: {user_content}")
 
@@ -210,9 +232,28 @@ IMPORTANT: Make sure your JSON response is COMPLETE with all closing brackets an
 
         except Exception as agent_error:
             print(f"Alith Agent error: {agent_error}")
-            return jsonify({
-                'error': 'AI processing failed. Please try again later.'
-            }), 500
+            # Graceful fallback on any agent error
+            fallback_caption = f"Civic issue reported: {user_content.strip()}. Immediate attention required."
+            hashtags = ["#civicissue", "#community"]
+            content_lower = user_content.lower()
+
+            if any(word in content_lower for word in ['road', 'street', 'pothole', 'traffic']):
+                hashtags.append("#infrastructure")
+            elif any(word in content_lower for word in ['water', 'drainage', 'flood', 'pipe']):
+                hashtags.append("#watersupply")
+            elif any(word in content_lower for word in ['light', 'electricity', 'power']):
+                hashtags.append("#utilities")
+            elif any(word in content_lower for word in ['waste', 'garbage', 'trash', 'clean']):
+                hashtags.append("#sanitation")
+            else:
+                hashtags.append("#infrastructure")
+
+            fallback_response = {
+                "caption": fallback_caption[:100],
+                "hashtags": hashtags
+            }
+            print(f"Returning fallback due to agent error: {fallback_response}")
+            return jsonify(fallback_response)
 
     except Exception as e:
         print(f"Endpoint error: {e}")
