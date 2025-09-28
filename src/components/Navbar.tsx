@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiMenu, FiX } from 'react-icons/fi';
 import { FaEthereum } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
-import LOGOS from '../assets/logo.png';
 import "../index.css"
 import { MdExplore } from "react-icons/md";
 import { FaPlusCircle } from "react-icons/fa";
+import PP from "../assets/logo-dp.png";
 
 const Navbar = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -166,7 +166,7 @@ const Navbar = () => {
             <div className="relative">
               <div className="absolute -inset-2 bg-gradient-to-br from-amber-400/20 via-red-400/20 to-yellow-400/20 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
               <img 
-                src={LOGOS}
+                src={PP}
                 alt="Voice_Vote Logo" 
                 className="relative h-11 w-11 object-contain transform group-hover:scale-110 transition-transform duration-500 drop-shadow-sm"
               />
@@ -208,23 +208,24 @@ const Navbar = () => {
           {/* Desktop Wallet & Mobile Toggle */}
           <div className="flex items-center space-x-4 flex-shrink-0">
             {/* Wallet Connection - Desktop */}
-            <div className="hidden lg:block">
-              {isConnected ? (
-                <div className="flex items-center bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md">
-                  <div className="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
-                  <FaEthereum className="mr-2" size={14} />
-                  <span className="font-mono">{shortenAddress(walletAddress)}</span>
-                </div>
-              ) : (
-                <button
-                  onClick={connectWallet}
-                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
-                >
-                  <FaEthereum size={14} />
-                  <span>Connect Wallet</span>
-                </button>
-              )}
-            </div>
+<div className="hidden lg:block">
+  {isConnected ? (
+    <div className="flex items-center bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-black px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md">
+      <div className="w-2 h-2 bg-black rounded-full mr-3 animate-pulse"></div>
+      <FaEthereum className="mr-2 text-black" size={14} />
+      <span className="font-mono">{shortenAddress(walletAddress)}</span>
+    </div>
+  ) : (
+    <button
+      onClick={connectWallet}
+      className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+    >
+      <FaEthereum size={14} />
+      <span>Connect Wallet</span>
+    </button>
+  )}
+</div>
+
 
             {/* Mobile Menu Button */}
             <button
@@ -268,26 +269,27 @@ const Navbar = () => {
           </div>
           
           {/* Mobile Wallet Section */}
-          <div className="px-6 pb-6 pt-2 border-t border-amber-100">
-            {isConnected ? (
-              <div className="flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 text-white px-5 py-4 rounded-2xl font-semibold shadow-md">
-                <div className="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
-                <FaEthereum className="mr-3" size={16} />
-                <span className="font-mono text-sm">{shortenAddress(walletAddress)}</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  connectWallet();
-                  closeMenu();
-                }}
-                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-white px-5 py-4 rounded-2xl text-base font-semibold shadow-md active:scale-95 transition-all duration-300"
-              >
-                <FaEthereum size={18} />
-                <span>Connect Wallet</span>
-              </button>
-            )}
-          </div>
+<div className="px-6 pb-6 pt-2 border-t border-amber-100">
+  {isConnected ? (
+    <div className="flex items-center justify-center bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-black px-5 py-4 rounded-2xl font-semibold shadow-md">
+      <div className="w-2 h-2 bg-black rounded-full mr-3 animate-pulse"></div>
+      <FaEthereum className="mr-3 text-black" size={16} />
+      <span className="font-mono text-sm">{shortenAddress(walletAddress)}</span>
+    </div>
+  ) : (
+    <button
+      onClick={() => {
+        connectWallet();
+        closeMenu();
+      }}
+      className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white px-5 py-4 rounded-2xl text-base font-semibold shadow-md active:scale-95 transition-all duration-300"
+    >
+      <FaEthereum size={18} />
+      <span>Connect Wallet</span>
+    </button>
+  )}
+</div>
+
         </div>
       </div>
     </nav>
