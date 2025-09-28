@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { GrLike, GrDislike } from 'react-icons/gr';
 import { motion } from 'framer-motion';
 import { BD_PORT } from '../const';
+import { FiHeart, FiMessageSquare, FiShare2, FiDownload, FiArrowLeft, FiMapPin, FiCalendar, FiUser, FiFlag } from 'react-icons/fi';
+import { FaHeart, FaRegHeart, FaRegComment, FaShare, FaFire, FaSeedling, FaCrown } from 'react-icons/fa';
 
 // Define the Post interface
 interface Post {
@@ -13,12 +14,15 @@ interface Post {
   hashtags: string[];
   likeCount: number;
   dislikeCount: number;
+  commentCount: number;
   active: boolean;
   authorUsername?: string;
   walletAddress?: string;
   createdAt: string;
   authorState?: string;
   authorLevel?: string;
+  urgency?: 'low' | 'medium' | 'high' | 'critical';
+  description?: string;
 }
 
 const PostDetails: React.FC = () => {
@@ -27,6 +31,8 @@ const PostDetails: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userInteraction, setUserInteraction] = useState<'like' | 'dislike' | null>(null);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const getAuthConfig = () => {
     const token = localStorage.getItem('token');
@@ -40,8 +46,26 @@ const PostDetails: React.FC = () => {
       : {};
   };
 
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case 'critical': return 'bg-red-500 text-white';
+      case 'high': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-amber-500 text-white';
+      case 'low': return 'bg-brown-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getUserLevelIcon = (level: string) => {
+    switch (level) {
+      case 'super_active': return <FaCrown className="text-amber-500" />;
+      case 'active': return <FaFire className="text-red-500" />;
+      default: return <FaSeedling className="text-green-500" />;
+    }
+  };
+
   const handleLike = async () => {
-    if (!post || userInteraction === 'like') return;
+    if (!post) return;
 
     try {
       const response = await axios.post<{ success: boolean; post: Post }>(
@@ -56,6 +80,7 @@ const PostDetails: React.FC = () => {
           likeCount: response.data.post.likeCount,
           dislikeCount: response.data.post.dislikeCount,
         }));
+        setIsLiked(true);
         setUserInteraction('like');
       }
     } catch (err: any) {
@@ -71,7 +96,7 @@ const PostDetails: React.FC = () => {
   };
 
   const handleDislike = async () => {
-    if (!post || userInteraction === 'dislike') return;
+    if (!post) return;
 
     try {
       const response = await axios.post<{ success: boolean; post: Post }>(
@@ -102,6 +127,44 @@ const PostDetails: React.FC = () => {
       } else {
         alert('Failed to dislike post.');
       }
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!post) return;
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(post.imageUrl, { mode: 'cors' });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = post.caption
+        ? post.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpg'
+        : `community_concern_${post.postId}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Failed to download image.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.caption || 'Community Concern',
+        text: post?.description || 'Check out this community concern on VoiceVote',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
     }
   };
 
@@ -144,15 +207,12 @@ const PostDetails: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden"
+        className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 flex items-center justify-center overflow-hidden pt-20"
       >
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-        </div>
-        <div className="flex flex-col items-center bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-cyan-500 mb-4"></div>
-          <p className="text-cyan-200 font-medium">Loading post...</p>
+        <div className="flex flex-col items-center bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-amber-200 shadow-lg">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-500 mb-4"></div>
+          <p className="text-brown-700 font-medium">Loading community concern...</p>
+          <p className="text-brown-500 text-sm mt-2">Getting post details</p>
         </div>
       </motion.div>
     );
@@ -163,21 +223,21 @@ const PostDetails: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden"
+        className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 flex items-center justify-center overflow-hidden pt-20"
       >
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30 text-center">
-          <div className="text-red-300 text-xl mb-4">Error: {error}</div>
+        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-amber-200 shadow-lg text-center max-w-md">
+          <div className="text-red-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-brown-800 mb-2">Error Loading Post</h3>
+          <p className="text-brown-600 mb-6">{error}</p>
           <Link
             to="/explore"
-            className="inline-flex items-center text-cyan-300 hover:text-sky-300 transition-colors"
+            className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-amber-500 to-red-500 text-white rounded-xl hover:from-amber-600 hover:to-red-600 transition-all shadow-lg"
           >
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <FiArrowLeft className="mr-2" />
             Back to Explore
           </Link>
         </div>
@@ -190,14 +250,14 @@ const PostDetails: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden"
+        className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 flex items-center justify-center overflow-hidden pt-20"
       >
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-xl border border-cyan-600/30 text-center">
-          <div className="text-cyan-200 text-xl">Post not found</div>
+        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-amber-200 shadow-lg text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <FiFlag className="w-8 h-8 text-amber-600" />
+          </div>
+          <h3 className="text-xl font-bold text-brown-800 mb-2">Post Not Found</h3>
+          <p className="text-brown-600">The requested community concern could not be found.</p>
         </div>
       </motion.div>
     );
@@ -207,140 +267,211 @@ const PostDetails: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-6 md:px-12 overflow-hidden"
+      className="relative min-h-screen bg-gradient-to-br from-amber-50 via-red-50 to-brown-50 py-8 px-4 sm:px-6 lg:px-8 overflow-hidden pt-20"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute top-10 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-cyan-600/20 via-sky-500/15 to-blue-500/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-cyan-700/15 via-sky-600/15 to-blue-500/10 blur-3xl" />
-      </div>
-      <div className="relative z-10 max-w-3xl mx-auto">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
         <Link
           to="/explore"
-          className="inline-flex items-center mb-6 text-cyan-300 hover:text-sky-300 transition-colors"
+          className="inline-flex items-center mb-6 text-brown-600 hover:text-brown-800 transition-colors group"
         >
-          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Explore
+          <FiArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back to Community Concerns
         </Link>
+
+        {/* Main Post Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-gradient-to-br from-slate-900/70 to-slate-800/50 backdrop-blur-sm rounded-xl border border-cyan-600/30 hover:border-sky-400/60 overflow-hidden transition-all duration-300 hover:shadow-[0_0_25px_-8px_rgba(56,189,248,0.35)]"
+          className="bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
         >
-          <div className="relative overflow-hidden">
+          {/* Image Section */}
+          <div className="relative">
             <img
               src={post.imageUrl}
-              alt={post.caption || 'Post'}
-              className="w-full h-96 object-contain bg-slate-900 border-b border-cyan-600/30 group-hover:scale-105 transition-transform duration-500"
+              alt={post.caption || 'Community Concern'}
+              className="w-full h-96 object-cover border-b border-amber-200"
               onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
-                e.currentTarget.className = 'w-full h-96 object-contain bg-slate-900';
+                e.currentTarget.src = 'https://via.placeholder.com/800x600/FFEDD5/7C2D12?text=Image+Not+Found';
+                e.currentTarget.className = 'w-full h-96 object-cover bg-amber-50 border-b border-amber-200';
               }}
             />
+            
+            {/* Urgency Badge */}
+            {post.urgency && (
+              <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold ${getUrgencyColor(post.urgency)}`}>
+                {post.urgency.toUpperCase()} PRIORITY
+              </div>
+            )}
+
+            {/* Action Buttons Overlay */}
+            <div className="absolute top-4 right-4 flex space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-brown-600 hover:text-amber-600 transition-colors shadow-lg"
+                title="Download image"
+              >
+                <FiDownload className="w-5 h-5" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleShare}
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-brown-600 hover:text-amber-600 transition-colors shadow-lg"
+                title="Share post"
+              >
+                <FiShare2 className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
+
+          {/* Content Section */}
           <div className="p-6">
-            <div className="flex items-center mb-4 justify-between">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-cyan-600 via-sky-500 to-blue-500 flex items-center justify-center rounded-md shadow-[0_0_15px_rgba(56,189,248,0.9)] mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+            {/* Author Info */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-amber-400 to-red-400 rounded-xl flex items-center justify-center shadow-lg">
+                  <FiUser className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-cyan-100">
-                    {post.authorUsername ||
-                      (post.walletAddress
-                        ? `${post.walletAddress.substring(0, 6)}...${post.walletAddress.substring(post.walletAddress.length - 4)}`
-                        : 'Anonymous')}
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-cyan-300">
-                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-bold text-brown-800">
+                      {post.authorUsername || 'Anonymous Community Member'}
+                    </h3>
+                    {post.authorLevel && getUserLevelIcon(post.authorLevel)}
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm text-brown-500 mt-1">
+                    <div className="flex items-center space-x-1">
+                      <FiCalendar size={12} />
+                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    </div>
                     {post.authorState && post.authorState !== 'unknown' && (
-                      <>
-                        <span>•</span>
+                      <div className="flex items-center space-x-1">
+                        <FiMapPin size={12} />
                         <span>{post.authorState}</span>
-                      </>
-                    )}
-                    {post.authorLevel && (
-                      <>
-                        <span>•</span>
-                        <span className="capitalize">{post.authorLevel}</span>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
-              <button
-                className="py-2 px-4 font-bold text-cyan-100 rounded-xl transition-all border border-cyan-600/25 hover:border-sky-400/60 bg-slate-900/20 hover:bg-slate-900/30"
-                onClick={async () => {
-                  try {
-                    const response = await fetch(post.imageUrl, { mode: 'cors' });
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = post.caption
-                      ? post.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpg'
-                      : `post_${post.postId}.jpg`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } catch (err) {
-                    console.error('Download error:', err);
-                    alert('Failed to download image.');
-                  }
-                }}
-                title="Download image"
-              >
-                <svg className="w-5 h-5 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v12" />
-                </svg>
-                Download
-              </button>
             </div>
-            <p className="text-lg text-cyan-100 font-semibold mb-2">{post.caption || 'Untitled Post'}</p>
+
+            {/* Caption and Description */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-brown-800 mb-3">
+                {post.caption || 'Community Concern'}
+              </h2>
+              {post.description && (
+                <p className="text-brown-600 leading-relaxed mb-4">
+                  {post.description}
+                </p>
+              )}
+            </div>
+
+            {/* Hashtags */}
             {post.hashtags && post.hashtags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-6">
                 {post.hashtags.map((tag: string, index: number) => (
-                  <span key={index} className="bg-slate-900/50 border border-cyan-600/30 text-cyan-300 px-2 py-1 rounded-xl text-xs">
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium border border-amber-200"
+                  >
                     {tag.startsWith('#') ? tag : `#${tag}`}
                   </span>
                 ))}
               </div>
             )}
-            <div className="flex items-center justify-between border-t border-cyan-600/30 pt-4 mt-4">
-              <div className="flex space-x-6">
-                <button
-                  className={`flex items-center focus:outline-none transition-colors ${
-                    userInteraction === 'like' ? 'text-green-400' : 'text-cyan-300 hover:text-green-300'
-                  } group`}
+
+            {/* Engagement Stats */}
+            <div className="flex items-center justify-between border-t border-amber-200 pt-4">
+              <div className="flex items-center space-x-6">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleLike}
-                  title="Like"
-                  disabled={userInteraction === 'like'}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                    isLiked
+                      ? 'bg-red-50 text-red-600 border border-red-200'
+                      : 'bg-amber-50 text-brown-600 border border-amber-200 hover:bg-amber-100'
+                  }`}
                 >
-                  <GrLike className="h-5 w-5 mr-1" />
+                  {isLiked ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
                   <span className="font-semibold">{post.likeCount || 0}</span>
-                </button>
-                <button
-                  className={`flex items-center focus:outline-none transition-colors ${
-                    userInteraction === 'dislike' ? 'text-red-400' : 'text-cyan-300 hover:text-red-300'
-                  } group`}
+                  <span>Support</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleDislike}
-                  title="Dislike"
-                  disabled={userInteraction === 'dislike'}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                    userInteraction === 'dislike'
+                      ? 'bg-red-50 text-red-600 border border-red-200'
+                      : 'bg-gray-50 text-brown-600 border border-gray-200 hover:bg-gray-100'
+                  }`}
                 >
-                  <GrDislike className="h-5 w-5 mr-1" />
+                  <FiFlag />
                   <span className="font-semibold">{post.dislikeCount || 0}</span>
-                </button>
+                  <span>Report</span>
+                </motion.button>
+
+                <div className="flex items-center space-x-2 text-brown-500">
+                  <FaRegComment />
+                  <span className="font-semibold">{post.commentCount || 0}</span>
+                  <span>Comments</span>
+                </div>
               </div>
-              <div className="text-xs text-cyan-300">
-                Post ID: {post.postId}
+
+              {/* Post Status */}
+              <div className="text-right">
+                <div className="text-xs text-brown-400 mb-1">Post ID: {post.postId}</div>
+                <div className={`text-xs font-semibold ${
+                  post.active ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {post.active ? 'Active' : 'Under Review'}
+                </div>
+              </div>
+            </div>
+
+            {/* Community Impact Message */}
+            <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+              <div className="flex items-center space-x-2 text-amber-700">
+                <FaSeedling className="flex-shrink-0" />
+                <p className="text-sm">
+                  <strong>Community Impact:</strong> Your engagement helps prioritize local issues and drive positive change.
+                </p>
               </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* Related Posts Suggestion */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-lg p-6"
+        >
+          <h3 className="text-lg font-bold text-brown-800 mb-4 flex items-center">
+            <FaFire className="mr-2 text-amber-600" />
+            More Community Concerns
+          </h3>
+          <p className="text-brown-600 mb-4">
+            Explore other issues in your community that need attention.
+          </p>
+          <Link
+            to="/explore"
+            className="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-700 rounded-xl hover:bg-amber-200 transition-colors border border-amber-200"
+          >
+            Browse All Concerns
+          </Link>
         </motion.div>
       </div>
     </motion.div>

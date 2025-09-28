@@ -92,11 +92,11 @@ const Navbar = () => {
             decimals: 18
           },
           rpcUrls: ['https://evmrpc.0g.ai'],
-          blockExplorerUrls: ['https://chainscan.0g.ai/']
+          blockExplorerUrls: ['https://explorer.0g.ai']
         }]
       });
     } catch (error) {
-      console.error('Error adding 0G Mainnet network:', error);
+      console.error('Error adding 0G Mainnet Network:', error);
     }
   };
 
@@ -104,7 +104,7 @@ const Navbar = () => {
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x4105' }] // 16661 in hexadecimal
+        params: [{ chainId: '0x4105' }] // 59902 in hexadecimal
       });
     } catch (switchError) {
       // This error code indicates that the chain has not been added to MetaMask
@@ -152,114 +152,128 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-40 transition-all duration-300 ease-in-out backdrop-blur-xl border-b ${
+      className={`fixed top-0 w-full z-50 transition-all duration-500 ease-out ${
         isScrolled
-          ? "bg-amber-50/90 border-amber-200/60 shadow-[0_0_25px_-8px_rgba(251,191,36,0.25)]"
-          : "bg-transparent border-transparent"
+          ? "bg-white/95 backdrop-blur-lg shadow-lg border-b border-amber-100/80"
+          : "bg-white/90 backdrop-blur-sm border-b border-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8">
+        <div className="flex items-center justify-between h-18 py-3">
+          
+          {/* Logo Section */}
+          <Link to="/" className="flex items-center space-x-4 group flex-shrink-0">
             <div className="relative">
+              <div className="absolute -inset-2 bg-gradient-to-br from-amber-400/20 via-red-400/20 to-yellow-400/20 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
               <img 
                 src={LOGOS}
-                alt="Voice vote Logo" 
-                className="h-12 w-12 object-contain transform group-hover:scale-105 transition-transform duration-300"
+                alt="Voice_Vote Logo" 
+                className="relative h-11 w-11 object-contain transform group-hover:scale-110 transition-transform duration-500 drop-shadow-sm"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-red-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-brown-700 via-amber-600 to-red-600 bg-clip-text text-transparent tracking-tight">
-                Voice-Vote
+              <h1 className="text-2xl font-black bg-gradient-to-r from-amber-600 via-red-500 to-orange-500 bg-clip-text text-transparent tracking-tight">
+                Voice
               </h1>
+              <span className="text-[10px] text-amber-600 font-semibold tracking-[0.15em] -mt-0.5 uppercase">Vote</span>
             </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex ml-6">
-            <div className="flex items-center gap-2">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center justify-center flex-1 mx-12">
+            <div className="flex items-center bg-amber-50/80 backdrop-blur-sm rounded-2xl p-1.5 shadow-sm border border-amber-100">
               {navItems.map(({ label, icon: Icon, path }) => (
                 <Link
                   key={label}
                   to={path}
-                  className={`relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium tracking-wide transition-all group overflow-hidden border ${
+                  className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group ${
                     isActive(path)
-                      ? "border-red-400/60 bg-white/60 shadow-[0_0_18px_-4px_rgba(239,68,68,0.35)] text-brown-800"
-                      : "border-amber-200/60 hover:border-red-300/70 bg-white/40 hover:bg-white/50 text-brown-700 hover:text-brown-800"
+                      ? "bg-gradient-to-r from-amber-500 to-red-500 text-white shadow-md transform scale-105"
+                      : "text-amber-700 hover:text-amber-800 hover:bg-white/70"
                   }`}
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-amber-100/0 via-red-100/30 to-yellow-100/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <Icon size={16} className={isActive(path) ? "text-red-600" : "text-amber-600"} />
-                  <span className="relative">{label}</span>
+                  {isActive(path) && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-red-500 rounded-xl shadow-lg"></div>
+                  )}
+                  <Icon 
+                    size={16} 
+                    className={`relative z-10 ${isActive(path) ? 'text-white' : 'text-amber-600'}`} 
+                  />
+                  <span className="relative z-10 font-medium">{label}</span>
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Wallet Connection */}
-          <div className="flex items-center space-x-4">
-            {isConnected ? (
-              <div className="flex items-center border-red-400/60 border bg-white/60 px-4 py-2 rounded-xl text-sm font-medium text-brown-800 shadow-md">
-                <FaEthereum className="text-amber-600 mr-2" />
-                <span>{shortenAddress(walletAddress)}</span>
-              </div>
-            ) : (
-              <button
-                onClick={connectWallet}
-                className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium tracking-wide transition-all group overflow-hidden border border-amber-200/60 hover:border-red-300/70 bg-white/40 hover:bg-white/50 text-brown-700 hover:text-brown-800 shadow-md hover:shadow-lg"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-amber-100/0 via-red-100/30 to-yellow-100/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <FaEthereum size={16} className="text-amber-600" />
-                <span className="relative">Connect Wallet</span>
-              </button>
-            )}
+          {/* Desktop Wallet & Mobile Toggle */}
+          <div className="flex items-center space-x-4 flex-shrink-0">
+            {/* Wallet Connection - Desktop */}
+            <div className="hidden lg:block">
+              {isConnected ? (
+                <div className="flex items-center bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md">
+                  <div className="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
+                  <FaEthereum className="mr-2" size={14} />
+                  <span className="font-mono">{shortenAddress(walletAddress)}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={connectWallet}
+                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                >
+                  <FaEthereum size={14} />
+                  <span>Connect Wallet</span>
+                </button>
+              )}
+            </div>
 
-            {/* Mobile Toggle */}
+            {/* Mobile Menu Button */}
             <button
               id="mobile-menu-button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden relative p-2 rounded-lg border border-amber-200/60 bg-white/50 backdrop-blur-lg text-brown-700 hover:border-red-300/70 hover:bg-white/60 transition-all"
+              className="lg:hidden relative p-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl text-amber-700 transition-all duration-300 shadow-sm"
               aria-label="Toggle mobile menu"
             >
-              {isMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+              {isMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Panel */}
+      {/* Mobile Menu */}
       <div
         id="mobile-menu"
-        className={`md:hidden transition-all duration-400 ease-out origin-top overflow-hidden ${
-          isMenuOpen ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0"
+        className={`lg:hidden absolute top-full left-0 right-0 transition-all duration-500 ease-out ${
+          isMenuOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-4"
         }`}
       >
-        <div className="mx-4 mt-2 mb-4 rounded-2xl border border-amber-200/60 bg-white/90 backdrop-blur-xl shadow-[0_0_25px_-8px_rgba(251,191,36,0.25)] p-4 space-y-2">
-          {navItems.map(({ label, icon: Icon, path }) => (
-            <Link
-              key={label}
-              to={path}
-              onClick={closeMenu}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium tracking-wide transition-all border overflow-hidden ${
-                isActive(path)
-                  ? "border-red-400/60 bg-amber-50/70 shadow-[0_0_18px_-4px_rgba(239,68,68,0.25)] text-brown-800"
-                  : "border-amber-200/50 hover:border-red-300/60 bg-white/40 hover:bg-amber-50/50 text-brown-700 hover:text-brown-800"
-              }`}
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-amber-100/0 via-red-100/20 to-yellow-100/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <Icon size={18} className={isActive(path) ? "text-red-600" : "text-amber-600"} />
-              <span className="relative">{label}</span>
-            </Link>
-          ))}
+        <div className="mx-4 mt-2 mb-6 bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-amber-100 overflow-hidden">
           
-          {/* Wallet connection in mobile menu */}
-          <div className="pt-2 mt-2 border-t border-amber-200/60">
+          {/* Mobile Navigation */}
+          <div className="p-6 space-y-2">
+            {navItems.map(({ label, icon: Icon, path }) => (
+              <Link
+                key={label}
+                to={path}
+                onClick={closeMenu}
+                className={`flex items-center gap-4 px-5 py-4 rounded-2xl text-base font-semibold transition-all duration-300 ${
+                  isActive(path)
+                    ? "bg-gradient-to-r from-amber-500 to-red-500 text-white shadow-md"
+                    : "text-amber-700 hover:bg-amber-50 active:bg-amber-100"
+                }`}
+              >
+                <Icon size={20} className={isActive(path) ? 'text-white' : 'text-amber-600'} />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+          
+          {/* Mobile Wallet Section */}
+          <div className="px-6 pb-6 pt-2 border-t border-amber-100">
             {isConnected ? (
-              <div className="flex items-center justify-center px-4 py-3 rounded-xl border border-red-400/60 bg-amber-50/70 shadow-md">
-                <FaEthereum className="text-amber-600 mr-2" />
-                <span className="text-brown-800 font-medium">{shortenAddress(walletAddress)}</span>
+              <div className="flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 text-white px-5 py-4 rounded-2xl font-semibold shadow-md">
+                <div className="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
+                <FaEthereum className="mr-3" size={16} />
+                <span className="font-mono text-sm">{shortenAddress(walletAddress)}</span>
               </div>
             ) : (
               <button
@@ -267,9 +281,9 @@ const Navbar = () => {
                   connectWallet();
                   closeMenu();
                 }}
-                className="w-full relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium tracking-wide transition-all border border-amber-200/50 hover:border-red-300/60 bg-white/40 hover:bg-amber-50/50 text-brown-700 hover:text-brown-800 shadow-md hover:shadow-lg"
+                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-white px-5 py-4 rounded-2xl text-base font-semibold shadow-md active:scale-95 transition-all duration-300"
               >
-                <FaEthereum size={18} className="text-amber-600" />
+                <FaEthereum size={18} />
                 <span>Connect Wallet</span>
               </button>
             )}
