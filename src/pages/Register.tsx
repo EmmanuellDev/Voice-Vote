@@ -26,7 +26,7 @@ const statesList: string[] = [
   "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
   "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
-const CONTRACT_ADDRESS: string = "0x7d444078768BbdBdB42Fb0F001d5d7B3EF3871f0";
+const CONTRACT_ADDRESS: string = "0xE940A67c83a9B9fDce85af250A1DABB3C5b8f38A";
 
 // Interfaces for API responses
 interface CheckResponse {

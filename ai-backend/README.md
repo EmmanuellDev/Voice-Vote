@@ -1,4 +1,4 @@
-# Metis AI Backend
+# 0G AI Backend
 
 A Flask-based AI backend service for civic engagement and community reporting using Alith Agent with Groq backend.
 
